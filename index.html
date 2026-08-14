@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#09060b">
+  <meta name="description" content="Para Pau ❤️">
+  <title>Para ti ❤️</title>
+  <style>
+    :root {
+      --bg:#09060b;
+      --text:#ffd7e3;
+    }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; background:var(--bg); }
+    body {
+      color:var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      touch-action:manipulation;
+    }
+    canvas { position:fixed; inset:0; width:100%; height:100%; }
+    .intro {
+      position:fixed; inset:0; z-index:5;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      text-align:center; padding:28px;
+      background:radial-gradient(circle at 50% 45%, #24101c 0%, #09060b 55%, #050408 100%);
+      transition:opacity 1.2s ease, visibility 1.2s ease;
+    }
+    .intro.hide { opacity:0; visibility:hidden; pointer-events:none; }
+    .intro p { margin:0 0 18px; font-size:clamp(18px,5vw,25px); letter-spacing:1px; }
+    .intro h1 { margin:0; font-size:clamp(31px,9vw,52px); font-weight:400; }
+    .start {
+      margin-top:30px; padding:13px 25px; border:1px solid #ff9fbd;
+      border-radius:999px; color:#ffdce7; background:#ffffff0b;
+      font:inherit; font-size:15px; cursor:pointer;
+      box-shadow:0 0 25px #ff5c8a22;
+    }
+    .start:active { transform:scale(.96); }
+    .final {
+      position:fixed; z-index:4; left:50%; bottom:7vh; transform:translateX(-50%) translateY(12px);
+      width:90%; text-align:center; opacity:0; transition:opacity 1.8s ease, transform 1.8s ease;
+      pointer-events:none; text-shadow:0 0 18px #ff4f8b66;
+    }
+    .final.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .final h2 { margin:0; font-size:clamp(28px,8vw,44px); font-weight:400; }
+    .final p { margin:10px 0 0; font-size:clamp(14px,4vw,18px); opacity:.78; }
+    .tap { position:fixed; z-index:6; top:22px; left:50%; transform:translateX(-50%);
+      font:11px Arial,sans-serif; letter-spacing:3px; opacity:.32; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <section class="intro" id="intro">
+    <p>Tengo algo para vos...</p>
+    <h1>Pau ❤️</h1>
+    <button class="start" id="start">abrir</button>
+  </section>
+
+  <div class="tap" id="tap">TOCÁ LA PANTALLA</div>
+
+  <div class="final" id="final">
+    <h2>i love you, Pau ❤️</h2>
+    <p>te elegiría una y otra vez</p>
+  </div>
+
+<script>
+const canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
+const intro=document.getElementById("intro"), final=document.getElementById("final"), tap=document.getElementById("tap");
+let W,H,dpr,particles=[],floaters=[],started=false,startTime=0,heartScale=1;
+
+const pinks=["#ffb6c9","#ff91b5","#ff7fa8","#ffc1d4","#ff5c91","#ffd5e1","#f98aaa"];
+
+function resize(){
+  dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  makeHeart(); makeFloaters();
+}
+function hp(t,s){
+  return {x:16*Math.sin(t)**3*s,
+    y:-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*s};
+}
+function makeHeart(){
+  particles=[];
+  const count=W<600?175:270, s=Math.min(W/39,H/31);
+  const cx=W/2,cy=H*.43;
+  for(let i=0;i<count;i++){
+    const t=2*Math.PI*i/count, p=hp(t,s);
+    // Segunda línea de puntos alrededor del contorno para que se vea más lleno.
+    const jitter=(Math.random()-.5)*s*.9;
+    particles.push({
+      tx:cx+p.x+jitter, ty:cy+p.y+jitter,
+      x:cx+(Math.random()-.5)*30, y:cy+(Math.random()-.5)*30,
+      delay:i*.010+Math.random()*.55, col:pinks[Math.floor(Math.random()*pinks.length)],
+      rot:(Math.random()-.5)*.08, word:"i love you", size:W<600?8:10
+    });
+  }
+}
+function makeFloaters(){
+  floaters=[];
+  for(let i=0;i<(W<600?18:28);i++){
+    floaters.push({
+      x:Math.random()*W,y:H+Math.random()*H,
+      s:Math.random()*10+7,v:Math.random()*.45+.18,
+      a:Math.random()*Math.PI*2,rot:(Math.random()-.5)*.04,
+      col:pinks[Math.floor(Math.random()*pinks.length)],
+      alpha:Math.random()*.45+.18
+    });
+  }
+}
+function heart(x,y,s,col,a){
+  ctx.save();ctx.translate(x,y);ctx.rotate(-.15);
+  ctx.scale(s,s);ctx.globalAlpha=a;ctx.fillStyle=col;
+  ctx.shadowColor=col;ctx.shadowBlur=10;
+  ctx.beginPath();ctx.moveTo(0,3);
+  ctx.bezierCurveTo(-8,-7,-16,-1,-16,6);
+  ctx.bezierCurveTo(-16,15,-5,21,0,26);
+  ctx.bezierCurveTo(5,21,16,15,16,6);
+  ctx.bezierCurveTo(16,-1,8,-7,0,3);ctx.fill();ctx.restore();
+}
+function draw(now){
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createRadialGradient(W/2,H*.42,0,W/2,H*.42,Math.min(W,H)*.6);
+  bg.addColorStop(0,"#ff4f8b0c");bg.addColorStop(1,"#00000000");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  for(const f of floaters){
+    f.y-=f.v; f.x+=Math.sin(now/1300+f.a)*.22;
+    if(f.y<-40){f.y=H+30;f.x=Math.random()*W;}
+    heart(f.x,f.y,f.s/18,f.col,f.alpha);
+  }
+
+  if(started){
+    const elapsed=(now-startTime)/1000;
+    for(const p of particles){
+      const q=Math.max(0,Math.min(1,(elapsed-p.delay)/2.4));
+      const e=1-Math.pow(1-q,3);
+      let x=p.x+(p.tx-p.x)*e, y=p.y+(p.ty-p.y)*e;
+      if(q>=1){
+        const pulse=1+Math.sin(now/520)*.016;
+        x=W/2+(x-W/2)*pulse*heartScale;
+        y=H*.43+(y-H*.43)*pulse*heartScale;
+      }
+      ctx.save();ctx.globalAlpha=Math.min(1,q*1.8);ctx.fillStyle=p.col;
+      ctx.shadowColor=p.col;ctx.shadowBlur=5;ctx.font=`bold ${p.size}px Arial`;
+      ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(p.word,x,y);ctx.restore();
+    }
+  }
+  requestAnimationFrame(draw);
+}
+function start(){
+  if(started)return;
+  started=true; startTime=performance.now();
+  intro.classList.add("hide"); tap.style.display="block";
+  setTimeout(()=>final.classList.add("show"),6200);
+  setTimeout(()=>tap.style.opacity=".15",8000);
+}
+function restart(){
+  if(!started)return;
+  startTime=performance.now(); final.classList.remove("show");
+  setTimeout(()=>final.classList.add("show"),6200);
+}
+document.getElementById("start").addEventListener("click",start);
+canvas.addEventListener("click",restart);
+addEventListener("resize",resize);
+resize();tap.style.display="none";requestAnimationFrame(draw);
+</script>
+</body>
+</html>
